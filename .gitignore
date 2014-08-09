@@ -13,3 +13,11 @@ results
 
 npm-debug.log
 node_modules
+
+/.idea/
+/.idea/scopes/
+*.xml
+*.iml
+.DS_Store
+npm-debug.log
+/node_modules

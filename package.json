@@ -1,14 +1,14 @@
 {
-  "name": "itach",
+  "name": "node-itach",
   "version": "0.0.1",
-  "description": "Module to connect to Global Cache iTach devices and send IR strings",
+  "description": "Module to connect to Global Cache iTach devices and send IR strings. Original repo: https://github.com/tillbaks/node-itach",
   "main": "itach.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tillbaks/node-itach"
+    "url": "https://github.com/natalan/node-itach"
   },
   "keywords": [
     "node",
@@ -16,9 +16,9 @@
   ],
   "license": "MIT License",
   "bugs": {
-    "url": "https://github.com/tillbaks/node-itach/issues"
+    "url": "https://github.com/natalan/node-itach/issues"
   },
   "dependencies": {
-      "async":  "*"
+      "async":  "0.9.0"
   }
 }
