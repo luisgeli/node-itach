@@ -37,7 +37,7 @@ var iTach = function(config) {
 
     config = _.extend({
         port: 4998,
-        timeout: 4000,
+        timeout: 10000,
         module: 1
     }, config);
 
@@ -98,13 +98,11 @@ var iTach = function(config) {
         socket.on('error', function (err) {
             console.error('node-itach :: error :: ', err);
             done(err);
-            socket.destroy();
         });
 
         socket.on('timeout', function() {
             console.error('node-itach :: error :: ', 'Timeout');
             done('Timeout');
-            socket.destroy();
         });
 
         socket.on('data', function (data) {
