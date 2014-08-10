@@ -90,6 +90,7 @@ var iTach = function(config) {
             console.log('node-itach :: connected to ' + config.host + ':' + config.port);
             console.log('node-itach :: sending data: ' + data);
             socket.write(data + "\r\n");
+            socket.end();
         });
 
         socket.on('close', function () {
