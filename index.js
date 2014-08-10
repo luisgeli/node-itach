@@ -1,6 +1,5 @@
 var request = require('request'),
     net = require('net'),
-    events = require('events'),
     _ = require('underscore'),
 
     ERRORCODES = {
@@ -90,7 +89,6 @@ var iTach = function(config) {
             console.log('node-itach :: connected to ' + config.host + ':' + config.port);
             console.log('node-itach :: sending data: ' + data);
             socket.write(data + "\r\n");
-            socket.end();
         });
 
         socket.on('close', function () {
@@ -99,12 +97,14 @@ var iTach = function(config) {
 
         socket.on('error', function (err) {
             console.error('node-itach :: error :: ', err);
-            done(err)
+            done(err);
+            socket.destroy();
         });
 
         socket.on('timeout', function() {
             console.error('node-itach :: error :: ', 'Timeout');
             done('Timeout');
+            socket.destroy();
         });
 
         socket.on('data', function (data) {
@@ -128,6 +128,6 @@ var iTach = function(config) {
             socket.destroy();
         });
     };
-}
+};
 
 module.exports = iTach;

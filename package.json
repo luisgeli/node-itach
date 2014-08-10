@@ -1,6 +1,6 @@
 {
   "name": "node-itach",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Module to connect to Global Cache iTach devices and send IR strings.",
   "main": "index.js",
   "scripts": {
