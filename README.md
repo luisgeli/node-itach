@@ -48,3 +48,10 @@ remote.learn(function done(err, code) {
 });
 
 ```
+
+TODO:
+-----
+- Add queue support to avoid busyIR response
+- Rewrite `learn` method to use TCP sockets instead HTTP REST API
+- Add HEX IR code support
+
