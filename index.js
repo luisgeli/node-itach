@@ -1,5 +1,6 @@
 var request = require('request'),
     net = require('net'),
+    events = require('events'),
     _ = require('underscore'),
 
     ERRORCODES = {
@@ -32,18 +33,37 @@ var request = require('request'),
         '027': 'Settings are locked'
     };
 
-var iTach = function(config) {
-    var self = this;
+var callbacks = {};
+var _addToCallbacks = function(done) {
+        console.log('node-itach :: generating new sha1 for IR transmittion');
+        console.log('node-itach :: currently callbacks hash contains %d', Object.keys(callbacks).length)
+        var id = crypto.randomBytes(20).toString('hex');
+        callbacks[id] = done;
 
+        return id;
+    },
+    _resolveCallback = function(id, err) {
+        if (callbacks[id]) {
+            console.log('node-itach :: status:%s resolving callback with id %s', err ? 'success' : 'error', id);
+            callbacks[id](err || false);
+            delete callbacks[id];
+        } else {
+            console.error('node-itach :: cannot find callback with id %s in callbacks hash', id);
+        }
+    };
+
+var iTach = function(config) {
     config = _.extend({
         port: 4998,
-        timeout: 10000,
+        timeout: 4000,
         module: 1
     }, config);
 
     if (!config.host) {
         throw new Error('Host is required for this module to function');
     }
+
+
 
     this.learn = function(done) {
         var options = {
@@ -71,8 +91,8 @@ var iTach = function(config) {
         if (typeof input.module !== 'undefined') {
             parts[1] = '1:' + input.module;
         }
-        // ID:
-        parts[2] = 1;
+        var id = _addToCallbacks(done);
+        parts[2] = id;
 
         if (typeof input.repeat !== 'undefined') {
             parts[4] = input.repeat;
@@ -84,11 +104,10 @@ var iTach = function(config) {
         var socket = net.connect(config.port, config.host);
         socket.setTimeout(config.timeout);
 
-
         socket.on('connect', function () {
             console.log('node-itach :: connected to ' + config.host + ':' + config.port);
-            console.log('node-itach :: sending data: ' + data);
-            socket.write(data + "\r\n");
+            console.log('node-itach :: sending data');
+            socket.end(data + "\r\n");
         });
 
         socket.on('close', function () {
@@ -113,19 +132,16 @@ var iTach = function(config) {
             if (parts[0] === 'busyIR') {
                 // This shound not happen if this script is the only device connected to the itach
                 // add rate limiter
-                done('Add Rate Limiter to the blaster')
-                return;
+                return _resolveCallback(parts[2], 'Add Rate Limiter to the blaster');
             } else if (parts[0].match(/^ERR/)) {
                 var err = ERRORCODES[parts[1].split('IR')[1]];
                 console.error('node-itach :: error :: ' + data + ': ' + err);
-                done(err);
+                return _resolveCallback(parts[2], err);
             } else {
-                done(false);
+                _resolveCallback(parts[2]);
             }
-            console.log('node-itach :: destroying socket');
-            socket.destroy();
         });
     };
-};
+}
 
 module.exports = iTach;
