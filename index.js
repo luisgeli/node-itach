@@ -34,7 +34,10 @@ var request = require('request'),
         '027': 'Settings are locked'
     };
 
+const DELAY_BETWEEN_COMMANDS = 5000;
+
 var callbacks = {},
+    messageQueue = [],
     _currentRequestID = 0;
 var _addToCallbacks = function(done) {
         console.log('node-itach :: generating new id for IR transmittion');
@@ -66,7 +69,7 @@ var iTach = function(config) {
         throw new Error('Host is required for this module to function');
     }
 
-
+    var isSending = false;
 
     this.learn = function(done) {
         var options = {
@@ -86,26 +89,21 @@ var iTach = function(config) {
         });
     };
 
-    this.send = function (input, done) {
-        if (!input) throw new Error ('Missing input');
-        var data,
-            parts = input.ir.split(',');
-
-        if (typeof input.module !== 'undefined') {
-            parts[1] = '1:' + input.module;
+    var _send = function() {
+        var self = this;
+        if (!messageQueue.length) {
+            console.log('Message queue is empty. returning...')
+            return;
         }
-        var id = _addToCallbacks(done);
-        parts[2] = id;
-
-        if (typeof input.repeat !== 'undefined') {
-            parts[4] = input.repeat;
-        }
-
-        data = parts.join(',');
-        console.log('Connecting to ' + config.host + ':' + config.port);
+        isSending = true;
+        console.log('Taking next message from the queue.')
+        var message = messageQueue.shift(),
+            id = message[0],
+            data = message[1];
 
         var socket = net.connect(config.port, config.host);
         socket.setTimeout(config.timeout);
+        console.log('Connecting to ' + config.host + ':' + config.port);
 
         socket.on('connect', function () {
             console.log('node-itach :: connected to ' + config.host + ':' + config.port);
@@ -148,7 +146,42 @@ var iTach = function(config) {
                 _resolveCallback(id);
             }
             socket.destroy();
+
+            isSending = false;
+            // go to the next message in the queue if any
+            if (messageQueue.length) {
+                console.log('Delay before going to another item in a queue...');
+                // for some reason my samsung tv needs this timeout.
+                setTimeout(function() {
+                    _send();
+                }, DELAY_BETWEEN_COMMANDS);
+            }
         });
+    };
+
+    this.send = function (input, done) {
+        if (!input) throw new Error ('Missing input');
+        var data,
+            parts = input.ir.split(',');
+
+        if (typeof input.module !== 'undefined') {
+            parts[1] = '1:' + input.module;
+        }
+        var id = _addToCallbacks(done);
+        parts[2] = id;
+
+        if (typeof input.repeat !== 'undefined') {
+            parts[4] = input.repeat;
+        }
+
+        data = parts.join(',');
+
+        // add to queue
+        messageQueue.push([id, data]);
+
+        if (!isSending) {
+            _send();
+        }
     };
 }
 
