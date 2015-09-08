@@ -36,19 +36,24 @@ var request = require('request'),
 
 const DELAY_BETWEEN_COMMANDS = 5000;
 
-var callbacks = {},
+var
+    callbacks = {},
     messageQueue = [],
     _currentRequestID = 0;
-var _addToCallbacks = function(done) {
-        console.log('node-itach :: generating new id for IR transmittion');
-        console.log('node-itach :: currently callbacks hash contains %d', Object.keys(callbacks).length);
-        _currentRequestID++;
-        var id = _currentRequestID;
+var _addToCallbacks = function (done, predefinedId) {
+        var id;
+        if (!predefinedId) {
+            console.log('node-itach :: generating new id for IR transmittion');
+            console.log('node-itach :: currently callbacks hash contains %d', Object.keys(callbacks).length);
+            _currentRequestID++;
+            id = _currentRequestID;
+        }
+        else
+            id = predefinedId;
         callbacks[id] = done;
-
         return id;
     },
-    _resolveCallback = function(id, err) {
+    _resolveCallback = function (id, err) {
         if (callbacks[id]) {
             console.log('node-itach :: status:%s resolving callback with id %s', err ? 'error' : 'success', id);
             callbacks[id](err || false);
@@ -58,7 +63,7 @@ var _addToCallbacks = function(done) {
         }
     };
 
-var iTach = function(config) {
+var iTach = function (config) {
     config = _.extend({
         port: 4998,
         timeout: 20000,
@@ -71,7 +76,7 @@ var iTach = function(config) {
 
     var isSending = false;
 
-    this.learn = function(done) {
+    this.learn = function (done) {
         var options = {
             method: 'GET',
             uri: "http://" + config.host + '/api/v1/irlearn',
@@ -89,7 +94,7 @@ var iTach = function(config) {
         });
     };
 
-    var _send = function() {
+    var _send = function () {
         var self = this;
         if (!messageQueue.length) {
             console.log('Message queue is empty. returning...')
@@ -121,7 +126,7 @@ var iTach = function(config) {
             socket.destroy();
         });
 
-        socket.on('timeout', function() {
+        socket.on('timeout', function () {
             console.error('node-itach :: error :: ', 'Timeout');
             done('Timeout');
             socket.destroy();
@@ -142,7 +147,9 @@ var iTach = function(config) {
                 var err = ERRORCODES[parts[1].split('IR')[1]];
                 console.error('node-itach :: error :: ' + data + ': ' + err);
                 return _resolveCallback(parts[2], err);
-            } else {
+            } else if (parts[0] === 'setstate') {
+                _resolveCallback(parts[1]);
+            } else if (parts[0] !== 'setstate') {
                 _resolveCallback(id);
             }
             socket.destroy();
@@ -152,7 +159,7 @@ var iTach = function(config) {
             if (messageQueue.length) {
                 console.log('Delay before going to another item in a queue...');
                 // for some reason my samsung tv needs this timeout.
-                setTimeout(function() {
+                setTimeout(function () {
                     _send();
                 }, DELAY_BETWEEN_COMMANDS);
             }
@@ -160,17 +167,28 @@ var iTach = function(config) {
     };
 
     this.send = function (input, done) {
-        if (!input) throw new Error ('Missing input');
+        if (!input) throw new Error('Missing input');
         var data,
+            ir = (input.ir != null);
+        if (ir)
             parts = input.ir.split(',');
+        else
+            parts = input.serial.split(',');
 
-        if (typeof input.module !== 'undefined') {
+        if (ir && typeof input.module !== 'undefined') {
             parts[1] = '1:' + input.module;
         }
-        var id = _addToCallbacks(done);
-        parts[2] = id;
+        var id;
+        if (ir) {
+            id = _addToCallbacks(done);
+            parts[2] = id;
+        }
+        else {
+            id = parts[1];
+            _addToCallbacks(done, id);
+        }
 
-        if (typeof input.repeat !== 'undefined') {
+        if (ir && typeof input.repeat !== 'undefined') {
             parts[4] = input.repeat;
         }
 

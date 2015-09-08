@@ -1,6 +1,6 @@
 {
   "name": "node-itach",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Module to connect to Global Cache iTach devices and send IR strings.",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/natalan/node-itach"
+    "url": "https://github.com/estbeetoo/node-itach"
   },
   "keywords": [
     "node",
@@ -16,10 +16,21 @@
   ],
   "license": "MIT License",
   "bugs": {
-    "url": "https://github.com/natalan/node-itach/issues"
+    "url": "https://github.com/estbeetoo/node-itach/issues"
   },
   "dependencies": {
     "request": "^2.34.0",
     "underscore": "^1.6.0"
-  }
+  },
+  "homepage": "https://github.com/estbeetoo/node-itach",
+  "maintainers": [
+    {
+      "name": "andrei.zharau",
+      "email": "belmass@gmail.com"
+    },
+    {
+      "name": "Alexander Borovsky",
+      "email": "aborovsky@beetoo.me"
+    }
+  ]
 }
